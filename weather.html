@@ -11,10 +11,12 @@
   <title>シンプル天気アプリ</title>
   <style>
     body {
-      font-family: system-ui, sans-serif;
-      max-width: 480px;
-      margin: 40px auto;
-      padding: 0 16px;
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    min-height: 100svh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     }
     h1 {
       text-align: center;
@@ -76,12 +78,17 @@
    .bg-layer.active {
     opacity: 1;
     }
+
+   .app {
+    width: min(480px, 100%);
+    }
   </style>
 </head>
 <body>
   <div id="bg1" class="bg-layer"></div>
   <div id="bg2" class="bg-layer"></div>
 
+  <div class="app">
   <h1>シンプル天気アプリ</h1>
 
   <div class="search-box">
@@ -91,6 +98,7 @@
 
   <div id="result" class="result">
     都市名を入力して「検索」を押してください。
+  </div>
   </div>
 
   <script>
