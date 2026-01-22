@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  
+  <!-- PWA化用-->
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#ffffff">
+  <!-- PWA化用-->
+
+  <title>シンプル天気アプリ</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 480px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.6rem;
+      margin-bottom: 24px;
+      font-family: "Mochiy Pop One", sans-serif;
+    }
+    .search-box {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 8px;
+      font-size: 1rem;
+    }
+    button {
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .result {
+      text-align: center;
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      min-height: 60px;
+      background: white;
+    }
+    .temp {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    .desc {
+      font-size: 1rem;
+      margin-top: 4px;
+    }
+    .city-name {
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+    .error {
+      color: #c00;
+    }
+
+   .bg-layer {
+    position: fixed;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: opacity 1.2s ease;
+    z-index: -1;
+    opacity: 0;
+    }
+   .bg-layer.active {
+    opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="bg1" class="bg-layer"></div>
+  <div id="bg2" class="bg-layer"></div>
+
+  <h1>シンプル天気アプリ</h1>
+
+  <div class="search-box">
+    <input id="cityInput" type="text" placeholder="都市名を入力（例: Tokyo）" />
+    <button id="searchBtn">検索</button>
+  </div>
+
+  <div id="result" class="result">
+    都市名を入力して「検索」を押してください。
+  </div>
+
+  <script>
+    const API_KEY = "f328bb94d6e22a03193bafc0d33043da";
+
+    const cityInput = document.getElementById("cityInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const resultDiv = document.getElementById("result");
+
+    searchBtn.addEventListener("click", () => {
+      const city = cityInput.value.trim();
+      if (!city) {
+        resultDiv.innerHTML = '<span class="error">都市名を入力してください。</span>';
+        return;
+      }
+
+      fetchWeather(city);
+    });
+
+    // 背景スライド
+    const bgImages = ["bg1.jpg", "bg2.jpg", "bg3.jpg", "bg4.jpg"];
+    let currentIndex = 0;
+    let showingFirst = true;
+
+    const layer1 = document.getElementById("bg1");
+    const layer2 = document.getElementById("bg2");
+
+    // 初期表示
+    layer1.style.backgroundImage = `url("${bgImages[0]}")`;
+    layer1.classList.add("active");
+
+    setInterval(() => {
+    currentIndex = (currentIndex + 1) % bgImages.length;
+
+    const showLayer = showingFirst ? layer2 : layer1;
+    const hideLayer = showingFirst ? layer1 : layer2;
+
+    showLayer.style.backgroundImage = `url("${bgImages[currentIndex]}")`;
+    showLayer.classList.add("active");
+    hideLayer.classList.remove("active");
+
+    showingFirst = !showingFirst;
+    }, 5000); //  5秒ごと
+    // 背景スライド
+
+    // Enterキーでも検索できるように
+    cityInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        searchBtn.click();
+      }
+    });
+
+    async function fetchWeather(city) {
+      resultDiv.textContent = "取得中...";
+
+      try {
+        const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
+          city
+        )}&appid=${API_KEY}&units=metric&lang=ja`;
+
+        const res = await fetch(url);
+        if (!res.ok) {
+          if (res.status === 404) {
+            throw new Error("その都市が見つかりませんでした。スペルを確認してください。");
+          } else {
+            throw new Error("天気情報の取得に失敗しました。時間をおいて再度お試しください。");
+          }
+        }
+
+        const data = await res.json();
+        renderWeather(data);
+      } catch (err) {
+        resultDiv.innerHTML = `<span class="error">${err.message}</span>`;
+      }
+    }
+
+    function renderWeather(data) {
+      const cityName = `${data.name}, ${data.sys.country}`;
+      const temp = Math.round(data.main.temp); // ℃
+      const desc = data.weather[0].description; // 説明（日本語になる）
+      const icon = data.weather[0].icon; // アイコンコード
+
+      const iconUrl = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+
+      resultDiv.innerHTML = `
+        <div class="city-name">${cityName}</div>
+        <div class="temp">${temp}℃</div>
+        <div class="desc">
+          <img src="${iconUrl}" alt="${desc}" style="vertical-align: middle;" />
+          <span>${desc}</span>
+        </div>
+      `;
+    }
+ 
+  // PWA化用
+     if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js");
+    }
+  // PWA化用
+  </script>
+</body>
+</html>
