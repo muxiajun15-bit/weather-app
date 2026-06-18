@@ -2,204 +2,1001 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  
-  <!-- PWA化用-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="./manifest.webmanifest">
-  <meta name="theme-color" content="#ffffff">
-  <!-- PWA化用-->
-
-  <title>シンプル天気アプリ</title>
+  <meta name="theme-color" content="#1a1a2e">
+  <title>天気予報</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mochiy+Pop+One&display=swap" rel="stylesheet">
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --glass-bg: rgba(255,255,255,0.12);
+      --glass-border: rgba(255,255,255,0.25);
+      --glass-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      --blur: blur(16px);
+      --text: #fff;
+      --text-dim: rgba(255,255,255,0.7);
+      --accent: rgba(255,255,255,0.2);
+      --radius: 20px;
+      --font: 'Inter', system-ui, sans-serif;
+      --transition: 0.35s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ── Background ── */
     body {
-    margin: 0;
-    font-family: system-ui, sans-serif;
-    min-height: 100svh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+      font-family: var(--font);
+      min-height: 100svh;
+      background: #1a1a2e;
+      color: var(--text);
+      overflow-x: hidden;
     }
-    h1 {
-      text-align: center;
-      font-size: 2.5rem;
-      margin-bottom: 24px;
-      font-family: "Mochiy Pop One", sans-serif;
+
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      transition: background 2s ease;
     }
-    .search-box {
+
+    /* ── Layout ── */
+    .app {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+    }
+
+    /* ── Header ── */
+    .header {
       display: flex;
-      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-family: 'Mochiy Pop One', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.02em;
+    }
+    .header-actions { display: flex; gap: 8px; }
+
+    /* ── Glass Card ── */
+    .glass {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      border-radius: var(--radius);
+      box-shadow: var(--glass-shadow);
+    }
+
+    /* ── Search Box ── */
+    .search-wrap {
+      position: relative;
       margin-bottom: 16px;
     }
-    input[type="text"] {
+    .search-row {
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px;
+      align-items: center;
+    }
+    .search-icon { font-size: 1.2rem; opacity: 0.7; flex-shrink: 0; }
+    #cityInput {
       flex: 1;
-      padding: 8px;
-      font-size: 1.6rem;
+      background: none;
+      border: none;
+      outline: none;
+      font-size: 1.1rem;
+      color: var(--text);
+      font-family: var(--font);
     }
-    button {
-      padding: 8px 12px;
-      font-size: 0.9rem;
+    #cityInput::placeholder { color: var(--text-dim); }
+    #searchBtn {
+      background: rgba(255,255,255,0.22);
+      border: 1px solid var(--glass-border);
+      color: var(--text);
+      padding: 8px 18px;
+      border-radius: 12px;
+      font-size: 0.95rem;
       cursor: pointer;
+      font-family: var(--font);
+      font-weight: 500;
+      transition: background var(--transition);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    .result {
+    #searchBtn:hover { background: rgba(255,255,255,0.32); }
+    #searchBtn .spinner {
+      display: none;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    #searchBtn.loading .btn-label { display: none; }
+    #searchBtn.loading .spinner { display: block; }
+
+    /* History Dropdown */
+    .history-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      z-index: 100;
+      overflow: hidden;
+      border-radius: 16px;
+    }
+    .history-dropdown.open { display: block; }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px 6px;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+    .history-clear-btn {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 0.78rem; cursor: pointer; padding: 2px 4px;
+      font-family: var(--font);
+    }
+    .history-clear-btn:hover { color: var(--text); }
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 0.95rem;
+    }
+    .history-item:hover { background: rgba(255,255,255,0.1); }
+    .history-item-left { display: flex; align-items: center; gap: 8px; }
+    .history-del {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 0.9rem; cursor: pointer; padding: 2px 6px;
+      line-height: 1;
+    }
+    .history-del:hover { color: #ff6b6b; }
+
+    /* ── Unit / Dark toggle ── */
+    .icon-btn {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      color: var(--text);
+      width: 38px; height: 38px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-family: var(--font);
+      font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--transition);
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── Geo Button ── */
+    #geoBtn {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 1.2rem; cursor: pointer; padding: 4px;
+      flex-shrink: 0; transition: color 0.2s;
+    }
+    #geoBtn:hover { color: var(--text); }
+
+    /* ── Favorites strip ── */
+    .favorites-strip {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      min-height: 0;
+    }
+    .fav-chip {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background var(--transition);
+      font-family: var(--font);
+    }
+    .fav-chip:hover { background: rgba(255,255,255,0.22); }
+    .fav-chip-del { opacity: 0.5; font-size: 0.75rem; cursor: pointer; }
+    .fav-chip-del:hover { opacity: 1; color: #ff6b6b; }
+
+    /* ── Current Weather Card ── */
+    #weatherCard {
+      padding: 28px 24px 24px;
+      margin-bottom: 16px;
+      animation: fadeUp 0.5s ease both;
+      display: none;
+    }
+
+    .weather-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .city-info h2 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .city-info .country-time {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+    .fav-toggle {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 1.5rem; cursor: pointer; padding: 4px;
+      transition: color 0.2s, transform 0.2s;
+      line-height: 1;
+    }
+    .fav-toggle:hover { transform: scale(1.2); }
+    .fav-toggle.active { color: #ff6b6b; }
+
+    .weather-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .weather-icon-wrap { position: relative; }
+    .weather-icon-wrap img {
+      width: 90px; height: 90px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+    .temp-big {
+      font-size: 5rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .temp-unit { font-size: 2rem; font-weight: 300; opacity: 0.8; }
+    .weather-desc-col {
+      margin-left: auto;
+      text-align: right;
+    }
+    .weather-desc { font-size: 1rem; color: var(--text-dim); margin-bottom: 6px; }
+    .feels-like { font-size: 0.85rem; color: var(--text-dim); }
+    .hi-lo { font-size: 0.9rem; margin-top: 4px; }
+    .hi-lo span { font-weight: 500; }
+
+    /* Details grid */
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .detail-item {
+      background: rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 12px 10px;
       text-align: center;
-      font-size: 1.4rem;
-      margin-top: 16px;
-      padding: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      min-height: 60px;
-      background: white;
     }
-    .temp {
-      font-size: 2rem;
-      font-weight: bold;
-    }
-    .desc {
-      font-size: 1rem;
+    .detail-label { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 4px; letter-spacing: 0.04em; }
+    .detail-value { font-size: 1.05rem; font-weight: 600; }
+    .detail-icon { font-size: 1.2rem; margin-bottom: 2px; }
+
+    /* AQI badge */
+    .aqi-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
       margin-top: 4px;
     }
-    .city-name {
-      font-weight: bold;
-      margin-bottom: 8px;
-      font-size: 1.1rem;
+
+    /* Sun row */
+    .sun-row {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.12);
     }
-    .error {
-      font-size: 1.4rem;
-      color: #c00;
+    .sun-item { text-align: center; }
+    .sun-label { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 4px; }
+    .sun-value { font-size: 0.95rem; font-weight: 500; }
+
+    /* ── Hourly Forecast ── */
+    #hourlyCard {
+      padding: 20px 0 20px 20px;
+      margin-bottom: 16px;
+      display: none;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+      padding-right: 20px;
+    }
+    .hourly-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      padding-right: 20px;
+      scrollbar-width: none;
+    }
+    .hourly-scroll::-webkit-scrollbar { display: none; }
+    .hourly-item {
+      flex-shrink: 0;
+      text-align: center;
+      background: rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 12px 14px;
+      min-width: 68px;
+    }
+    .hourly-item.now { background: rgba(255,255,255,0.2); }
+    .hourly-time { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 6px; }
+    .hourly-icon { font-size: 1.5rem; margin-bottom: 4px; }
+    .hourly-temp { font-size: 0.95rem; font-weight: 600; }
+    .hourly-pop { font-size: 0.72rem; color: #7ec8e3; margin-top: 2px; }
+
+    /* ── 5-Day Forecast ── */
+    #forecastCard {
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      display: none;
+      animation: fadeUp 0.5s 0.2s ease both;
+    }
+    .forecast-list { display: flex; flex-direction: column; gap: 4px; }
+    .forecast-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .forecast-row:last-child { border-bottom: none; }
+    .forecast-day { width: 72px; font-size: 0.9rem; font-weight: 500; }
+    .forecast-icon { font-size: 1.4rem; width: 40px; text-align: center; }
+    .forecast-desc { flex: 1; font-size: 0.82rem; color: var(--text-dim); }
+    .forecast-pop { font-size: 0.8rem; color: #7ec8e3; width: 40px; text-align: right; }
+    .forecast-temps { display: flex; gap: 8px; font-size: 0.9rem; min-width: 80px; justify-content: flex-end; }
+    .forecast-hi { font-weight: 600; }
+    .forecast-lo { color: var(--text-dim); }
+
+    /* ── Status / Error ── */
+    #statusMsg {
+      text-align: center;
+      padding: 40px 20px;
+      font-size: 1rem;
+      color: var(--text-dim);
+      display: none;
+    }
+    #statusMsg.error { color: #ff8a8a; }
+    #statusMsg.visible { display: block; }
+
+    /* ── Last Updated ── */
+    .last-updated {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 8px;
     }
 
-   .bg-layer {
-    position: fixed;
-    inset: 0;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    transition: opacity 1.2s ease;
-    z-index: -1;
-    opacity: 0;
+    /* ── Animations ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-   .bg-layer.active {
-    opacity: 1;
-    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-   .app {
-    width: min(92vw, 560px);
+    /* ── Dark Mode (light override) ── */
+    body.light {
+      --glass-bg: rgba(0,0,0,0.07);
+      --glass-border: rgba(0,0,0,0.12);
+      --glass-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      --text: #1a1a2e;
+      --text-dim: rgba(0,0,0,0.5);
+      --accent: rgba(0,0,0,0.1);
+      background: #e8edf5;
+    }
+    body.light #bg-canvas { opacity: 0.4; }
+
+    /* ── Responsive ── */
+    @media (max-width: 400px) {
+      .temp-big { font-size: 4rem; }
+      .details-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
 <body>
-  <div id="bg1" class="bg-layer"></div>
-  <div id="bg2" class="bg-layer"></div>
+  <div id="bg-canvas"></div>
 
   <div class="app">
-  <h1>シンプル天気アプリ</h1>
+    <!-- Header -->
+    <div class="header">
+      <h1>☁ 天気予報</h1>
+      <div class="header-actions">
+        <button class="icon-btn" id="unitToggle" title="°C / °F 切り替え" aria-label="単位切り替え">°C</button>
+        <button class="icon-btn" id="themeToggle" title="ダーク/ライト切り替え" aria-label="テーマ切り替え">🌙</button>
+      </div>
+    </div>
 
-  <div class="search-box">
-    <input id="cityInput" type="text" placeholder="都市名を入力（例: Tokyo）" />
-    <button id="searchBtn">検索</button>
-  </div>
+    <!-- Search -->
+    <div class="search-wrap">
+      <div class="glass search-row">
+        <span class="search-icon">🔍</span>
+        <input id="cityInput" type="text" placeholder="都市名を入力（例: Tokyo, London）"
+          autocomplete="off" aria-label="都市名" />
+        <button id="geoBtn" title="現在地を使用" aria-label="現在地を使用">📍</button>
+        <button id="searchBtn" aria-label="検索">
+          <span class="btn-label">検索</span>
+          <div class="spinner" aria-hidden="true"></div>
+        </button>
+      </div>
+      <div class="history-dropdown glass" id="historyDropdown" role="listbox" aria-label="検索履歴">
+        <div class="history-header">
+          <span>最近の検索</span>
+          <button class="history-clear-btn" id="clearHistoryBtn">すべて削除</button>
+        </div>
+        <div id="historyList"></div>
+      </div>
+    </div>
 
-  <div id="result" class="result">
-    都市名を入力して「検索」を押してください。
-  </div>
+    <!-- Favorites -->
+    <div class="favorites-strip" id="favStrip"></div>
+
+    <!-- Status / Error -->
+    <div id="statusMsg" role="alert" aria-live="polite"></div>
+
+    <!-- Current Weather -->
+    <div class="glass" id="weatherCard" role="main" aria-label="現在の天気">
+      <div class="weather-top">
+        <div class="city-info">
+          <h2 id="cityName">—</h2>
+          <div class="country-time" id="countryTime">—</div>
+        </div>
+        <button class="fav-toggle" id="favToggle" aria-label="お気に入り登録">♡</button>
+      </div>
+      <div class="weather-main">
+        <div class="weather-icon-wrap">
+          <img id="weatherIcon" src="" alt="" width="90" height="90" />
+        </div>
+        <div>
+          <div class="temp-big"><span id="tempVal">—</span><span class="temp-unit" id="tempUnitLabel">°C</span></div>
+          <div class="feels-like" id="feelsLike"></div>
+          <div class="hi-lo" id="hiLo"></div>
+        </div>
+        <div class="weather-desc-col">
+          <div class="weather-desc" id="weatherDesc">—</div>
+          <div id="aqiBadge"></div>
+        </div>
+      </div>
+      <div class="details-grid" id="detailsGrid"></div>
+      <div class="sun-row" id="sunRow"></div>
+    </div>
+
+    <!-- Hourly -->
+    <div class="glass" id="hourlyCard" aria-label="時間別予報">
+      <div class="section-title">HOURLY FORECAST</div>
+      <div class="hourly-scroll" id="hourlyScroll"></div>
+    </div>
+
+    <!-- 5-Day Forecast -->
+    <div class="glass" id="forecastCard" aria-label="5日間予報">
+      <div class="section-title">5-DAY FORECAST</div>
+      <div class="forecast-list" id="forecastList"></div>
+    </div>
+
+    <div class="last-updated" id="lastUpdated"></div>
   </div>
 
   <script>
+  (() => {
     const API_KEY = "f328bb94d6e22a03193bafc0d33043da";
 
-    const cityInput = document.getElementById("cityInput");
-    const searchBtn = document.getElementById("searchBtn");
-    const resultDiv = document.getElementById("result");
+    // ── State ──
+    let useFahrenheit = false;
+    let currentData = null;      // raw API data for unit conversion
+    let currentCity = "";
+    let currentLat = null, currentLon = null;
+    let refreshTimer = null;
+    let lastFetchTime = null;
 
-    searchBtn.addEventListener("click", () => {
-      const city = cityInput.value.trim();
-      if (!city) {
-        resultDiv.innerHTML = '<span class="error">都市名を入力してください。</span>';
+    const MAX_HISTORY = 10;
+
+    // ── DOM refs ──
+    const cityInput   = document.getElementById("cityInput");
+    const searchBtn   = document.getElementById("searchBtn");
+    const geoBtn      = document.getElementById("geoBtn");
+    const unitToggle  = document.getElementById("unitToggle");
+    const themeToggle = document.getElementById("themeToggle");
+    const historyDrop = document.getElementById("historyDropdown");
+    const historyList = document.getElementById("historyList");
+    const clearHistBtn= document.getElementById("clearHistoryBtn");
+    const favStrip    = document.getElementById("favStrip");
+    const favToggle   = document.getElementById("favToggle");
+    const statusMsg   = document.getElementById("statusMsg");
+    const weatherCard = document.getElementById("weatherCard");
+    const hourlyCard  = document.getElementById("hourlyCard");
+    const forecastCard= document.getElementById("forecastCard");
+    const lastUpdatedEl = document.getElementById("lastUpdated");
+
+    // ── LocalStorage helpers ──
+    const getHistory  = () => JSON.parse(localStorage.getItem("wx_history") || "[]");
+    const getFavs     = () => JSON.parse(localStorage.getItem("wx_favs") || "[]");
+    const isDark      = () => localStorage.getItem("wx_dark") !== "light";
+
+    function saveHistory(city) {
+      let h = getHistory().filter(c => c.toLowerCase() !== city.toLowerCase());
+      h.unshift(city);
+      if (h.length > MAX_HISTORY) h = h.slice(0, MAX_HISTORY);
+      localStorage.setItem("wx_history", JSON.stringify(h));
+      renderHistory();
+    }
+    function deleteHistory(city) {
+      const h = getHistory().filter(c => c.toLowerCase() !== city.toLowerCase());
+      localStorage.setItem("wx_history", JSON.stringify(h));
+      renderHistory();
+    }
+    function toggleFav(city) {
+      let favs = getFavs();
+      const idx = favs.findIndex(c => c.toLowerCase() === city.toLowerCase());
+      if (idx >= 0) favs.splice(idx, 1); else favs.unshift(city);
+      localStorage.setItem("wx_favs", JSON.stringify(favs));
+      renderFavs();
+      updateFavBtn();
+    }
+    function isFav(city) {
+      return getFavs().some(c => c.toLowerCase() === city.toLowerCase());
+    }
+
+    // ── Unit conversion ──
+    const toDisplay = c => useFahrenheit ? Math.round(c * 9/5 + 32) : Math.round(c);
+    const unitStr   = () => useFahrenheit ? "°F" : "°C";
+
+    // ── Background gradients ──
+    const BG_MAP = {
+      clear_day:   "linear-gradient(160deg,#1e3c72,#2a5298,#f7971e)",
+      clear_night: "linear-gradient(160deg,#0f0c29,#302b63,#24243e)",
+      clouds_day:  "linear-gradient(160deg,#3a4a5c,#5c7a9a,#8ca6b8)",
+      clouds_night:"linear-gradient(160deg,#1a1a2e,#16213e,#0f3460)",
+      rain_day:    "linear-gradient(160deg,#1e3c6e,#2d6a9f,#4a4a8a)",
+      rain_night:  "linear-gradient(160deg,#0d0d1a,#1a2640,#0d2444)",
+      snow_day:    "linear-gradient(160deg,#6a9fb5,#8bbfd4,#cde3ec)",
+      snow_night:  "linear-gradient(160deg,#1a2a3a,#2a3a4a,#3a4a5a)",
+      thunder_day: "linear-gradient(160deg,#1a1a2e,#4a3060,#6a2070)",
+      thunder_night:"linear-gradient(160deg,#0a0a1a,#1a1040,#2a0a30)",
+      mist_day:    "linear-gradient(160deg,#536976,#657f8a,#8aa3ae)",
+      mist_night:  "linear-gradient(160deg,#1a2030,#2a3040,#3a4050)",
+      default:     "linear-gradient(160deg,#1a1a2e,#16213e,#0f3460)",
+    };
+
+    function setBackground(weatherId, icon) {
+      const isNight = icon && icon.endsWith("n");
+      const suffix  = isNight ? "_night" : "_day";
+      let key;
+      if (weatherId >= 200 && weatherId < 300) key = "thunder";
+      else if (weatherId >= 300 && weatherId < 600) key = "rain";
+      else if (weatherId >= 600 && weatherId < 700) key = "snow";
+      else if (weatherId >= 700 && weatherId < 800) key = "mist";
+      else if (weatherId === 800) key = "clear";
+      else if (weatherId > 800) key = "clouds";
+      else key = "default";
+      document.getElementById("bg-canvas").style.background =
+        BG_MAP[key + suffix] || BG_MAP["default"];
+    }
+
+    // ── Weather icon emoji (fallback supplement) ──
+    function iconEmoji(id, icon) {
+      const n = icon && icon.endsWith("n");
+      if (id === 800) return n ? "🌙" : "☀️";
+      if (id > 800)  return n ? "☁️" : "⛅";
+      if (id >= 700) return "🌫️";
+      if (id >= 600) return "❄️";
+      if (id >= 500) return "🌧️";
+      if (id >= 300) return "🌦️";
+      if (id >= 200) return "⛈️";
+      return "🌡️";
+    }
+
+    // ── Wind direction ──
+    function windDir(deg) {
+      const dirs = ["北","北北東","北東","東北東","東","東南東","南東","南南東",
+                    "南","南南西","南西","西南西","西","西北西","北西","北北西"];
+      return dirs[Math.round(deg / 22.5) % 16];
+    }
+
+    // ── AQI ──
+    const AQI_LABELS = ["—","良好","まずまず","やや悪い","悪い","非常に悪い"];
+    const AQI_COLORS = ["","#4caf50","#8bc34a","#ff9800","#f44336","#9c27b0"];
+
+    // ── Render helpers ──
+    function showStatus(msg, isError = false) {
+      statusMsg.textContent = msg;
+      statusMsg.className = (isError ? "error" : "") + " visible";
+      weatherCard.style.display = "none";
+      hourlyCard.style.display  = "none";
+      forecastCard.style.display= "none";
+    }
+    function hideStatus() {
+      statusMsg.className = "";
+    }
+    function setLoading(on) {
+      searchBtn.classList.toggle("loading", on);
+      searchBtn.disabled = on;
+    }
+
+    // ── Render current weather ──
+    function renderCurrent(w, aqi) {
+      const id      = w.weather[0].id;
+      const icon    = w.weather[0].icon;
+      const desc    = w.weather[0].description;
+      const tempC   = w.main.temp;
+      const feelsC  = w.main.feels_like;
+      const minC    = w.main.temp_min;
+      const maxC    = w.main.temp_max;
+      const hum     = w.main.humidity;
+      const pres    = w.main.pressure;
+      const vis     = w.visibility ? (w.visibility / 1000).toFixed(1) + " km" : "—";
+      const windSpd = w.wind ? Math.round(w.wind.speed * 3.6) : 0;
+      const windDeg = w.wind ? w.wind.deg : 0;
+      const sunrise = new Date(w.sys.sunrise * 1000);
+      const sunset  = new Date(w.sys.sunset  * 1000);
+      const fmt     = d => d.toLocaleTimeString("ja-JP", {hour:"2-digit",minute:"2-digit"});
+      const localTime = new Date(Date.now() + w.timezone * 1000 - new Date().getTimezoneOffset()*60000);
+
+      setBackground(id, icon);
+
+      document.getElementById("cityName").textContent   = `${w.name}, ${w.sys.country}`;
+      document.getElementById("countryTime").textContent =
+        localTime.toLocaleString("ja-JP",{hour:"2-digit",minute:"2-digit",weekday:"short"}) + " 現地時刻";
+      document.getElementById("weatherIcon").src = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+      document.getElementById("weatherIcon").alt = desc;
+      document.getElementById("tempVal").textContent = toDisplay(tempC);
+      document.getElementById("tempUnitLabel").textContent = unitStr();
+      document.getElementById("weatherDesc").textContent = desc;
+      document.getElementById("feelsLike").textContent = `体感 ${toDisplay(feelsC)}${unitStr()}`;
+      document.getElementById("hiLo").innerHTML =
+        `<span>↑${toDisplay(maxC)}</span> / <span style="color:var(--text-dim)">↓${toDisplay(minC)}</span>${unitStr()}`;
+
+      // Details grid
+      document.getElementById("detailsGrid").innerHTML = `
+        <div class="detail-item"><div class="detail-icon">💧</div><div class="detail-label">湿度</div><div class="detail-value">${hum}%</div></div>
+        <div class="detail-item"><div class="detail-icon">💨</div><div class="detail-label">風速</div><div class="detail-value">${windSpd}km/h</div><div style="font-size:0.72rem;color:var(--text-dim)">${windDir(windDeg)}</div></div>
+        <div class="detail-item"><div class="detail-icon">🔵</div><div class="detail-label">気圧</div><div class="detail-value">${pres}hPa</div></div>
+        <div class="detail-item"><div class="detail-icon">👁</div><div class="detail-label">視程</div><div class="detail-value">${vis}</div></div>
+        <div class="detail-item"><div class="detail-icon">🌡</div><div class="detail-label">体感</div><div class="detail-value">${toDisplay(feelsC)}${unitStr()}</div></div>
+        <div class="detail-item" id="aqiDetail"><div class="detail-icon">🌿</div><div class="detail-label">大気質</div><div class="detail-value" id="aqiVal">—</div></div>
+      `;
+      if (aqi) {
+        const idx = aqi.list[0].main.aqi;
+        document.getElementById("aqiVal").innerHTML =
+          `<span class="aqi-badge" style="background:${AQI_COLORS[idx]}22;color:${AQI_COLORS[idx]};border:1px solid ${AQI_COLORS[idx]}44">${AQI_LABELS[idx]}</span>`;
+      }
+
+      // Sun row
+      document.getElementById("sunRow").innerHTML = `
+        <div class="sun-item"><div class="sun-label">🌅 日の出</div><div class="sun-value">${fmt(sunrise)}</div></div>
+        <div class="sun-item"><div class="sun-label">🌇 日の入り</div><div class="sun-value">${fmt(sunset)}</div></div>
+      `;
+
+      currentCity = w.name;
+      updateFavBtn();
+
+      weatherCard.style.display = "block";
+      hideStatus();
+    }
+
+    // ── Render hourly ──
+    function renderHourly(items) {
+      const now = Date.now() / 1000;
+      const slice = items.filter(i => i.dt > now).slice(0, 12);
+      if (!slice.length) return;
+      document.getElementById("hourlyScroll").innerHTML = slice.map((item, idx) => {
+        const t    = new Date(item.dt * 1000);
+        const time = t.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+        const pop  = item.pop ? Math.round(item.pop * 100) : 0;
+        const em   = iconEmoji(item.weather[0].id, item.weather[0].icon);
+        return `<div class="hourly-item${idx===0?" now":""}">
+          <div class="hourly-time">${time}</div>
+          <div class="hourly-icon">${em}</div>
+          <div class="hourly-temp">${toDisplay(item.main.temp)}${unitStr()}</div>
+          ${pop > 0 ? `<div class="hourly-pop">💧${pop}%</div>` : ""}
+        </div>`;
+      }).join("");
+      hourlyCard.style.display = "block";
+    }
+
+    // ── Render 5-day forecast ──
+    function renderForecast(items) {
+      const days = {};
+      const today = new Date().toLocaleDateString("ja-JP");
+      items.forEach(item => {
+        const d = new Date(item.dt * 1000);
+        const key = d.toLocaleDateString("ja-JP");
+        if (key === today) return; // skip today
+        if (!days[key]) days[key] = { items: [], date: d };
+        days[key].items.push(item);
+      });
+
+      const rows = Object.values(days).slice(0, 5).map(({ items: its, date }) => {
+        const temps = its.map(i => i.main.temp);
+        const hi = Math.max(...temps), lo = Math.min(...temps);
+        const mid = its[Math.floor(its.length / 2)];
+        const id  = mid.weather[0].id;
+        const icon= mid.weather[0].icon;
+        const pop = Math.max(...its.map(i => i.pop || 0));
+        const dayLabel = date.toLocaleDateString("ja-JP",{weekday:"short",month:"numeric",day:"numeric"});
+        return `<div class="forecast-row">
+          <div class="forecast-day">${dayLabel}</div>
+          <div class="forecast-icon">${iconEmoji(id, icon)}</div>
+          <div class="forecast-desc">${mid.weather[0].description}</div>
+          ${pop > 0.05 ? `<div class="forecast-pop">💧${Math.round(pop*100)}%</div>` : '<div class="forecast-pop"></div>'}
+          <div class="forecast-temps">
+            <span class="forecast-hi">${toDisplay(hi)}°</span>
+            <span class="forecast-lo">${toDisplay(lo)}°</span>
+          </div>
+        </div>`;
+      }).join("");
+
+      document.getElementById("forecastList").innerHTML = rows;
+      forecastCard.style.display = "block";
+    }
+
+    // ── Last updated ──
+    function updateLastUpdated() {
+      lastFetchTime = Date.now();
+      const tick = () => {
+        const mins = Math.floor((Date.now() - lastFetchTime) / 60000);
+        lastUpdatedEl.textContent = mins < 1 ? "たった今更新" : `${mins}分前に更新`;
+      };
+      tick();
+      clearInterval(window._uptTimer);
+      window._uptTimer = setInterval(tick, 30000);
+    }
+
+    // ── Fetch all data ──
+    async function fetchWeatherByCity(city) {
+      setLoading(true);
+      showStatus("取得中...");
+      try {
+        const base = "https://api.openweathermap.org";
+        const [wRes, fRes] = await Promise.all([
+          fetch(`${base}/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=ja`),
+          fetch(`${base}/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=ja&cnt=40`),
+        ]);
+        if (!wRes.ok) {
+          if (wRes.status === 404) throw new Error("その都市が見つかりませんでした。スペルを確認してください。");
+          throw new Error("天気情報の取得に失敗しました。時間をおいて再試行してください。");
+        }
+        const [wData, fData] = await Promise.all([wRes.json(), fRes.json()]);
+        currentData = { weather: wData, forecast: fData };
+        currentLat  = wData.coord.lat;
+        currentLon  = wData.coord.lon;
+        const aqiData = await fetchAQI(currentLat, currentLon);
+        renderAll(wData, fData, aqiData);
+        saveHistory(wData.name);
+        scheduleAutoRefresh(wData.name, null, null);
+      } catch (e) {
+        showStatus(e.message, true);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function fetchWeatherByCoords(lat, lon) {
+      setLoading(true);
+      showStatus("取得中...");
+      try {
+        const base = "https://api.openweathermap.org";
+        const [wRes, fRes] = await Promise.all([
+          fetch(`${base}/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=ja`),
+          fetch(`${base}/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=ja&cnt=40`),
+        ]);
+        if (!wRes.ok) throw new Error("天気情報の取得に失敗しました。");
+        const [wData, fData] = await Promise.all([wRes.json(), fRes.json()]);
+        currentData = { weather: wData, forecast: fData };
+        currentLat  = lat;
+        currentLon  = lon;
+        const aqiData = await fetchAQI(lat, lon);
+        renderAll(wData, fData, aqiData);
+        saveHistory(wData.name);
+        scheduleAutoRefresh(null, lat, lon);
+      } catch (e) {
+        showStatus(e.message, true);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function fetchAQI(lat, lon) {
+      try {
+        const res = await fetch(
+          `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`
+        );
+        if (!res.ok) return null;
+        return await res.json();
+      } catch { return null; }
+    }
+
+    function renderAll(wData, fData, aqiData) {
+      renderCurrent(wData, aqiData);
+      renderHourly(fData.list);
+      renderForecast(fData.list);
+      updateLastUpdated();
+    }
+
+    // ── Unit toggle: re-render without refetch ──
+    function rerenderUnits() {
+      if (!currentData) return;
+      const { weather: wData, forecast: fData } = currentData;
+      document.getElementById("tempVal").textContent = toDisplay(wData.main.temp);
+      document.getElementById("tempUnitLabel").textContent = unitStr();
+      document.getElementById("feelsLike").textContent = `体感 ${toDisplay(wData.main.feels_like)}${unitStr()}`;
+      document.getElementById("hiLo").innerHTML =
+        `<span>↑${toDisplay(wData.main.temp_max)}</span> / <span style="color:var(--text-dim)">↓${toDisplay(wData.main.temp_min)}</span>${unitStr()}`;
+      const grid = document.getElementById("detailsGrid");
+      if (grid) {
+        const feelsEl = grid.querySelector(".detail-item:nth-child(5) .detail-value");
+        if (feelsEl) feelsEl.textContent = `${toDisplay(wData.main.feels_like)}${unitStr()}`;
+      }
+      renderHourly(fData.list);
+      renderForecast(fData.list);
+    }
+
+    // ── Auto refresh every 10 min ──
+    function scheduleAutoRefresh(city, lat, lon) {
+      clearInterval(refreshTimer);
+      refreshTimer = setInterval(() => {
+        if (city) fetchWeatherByCity(city);
+        else if (lat != null) fetchWeatherByCoords(lat, lon);
+      }, 10 * 60 * 1000);
+    }
+
+    // ── History UI ──
+    function renderHistory() {
+      const h = getHistory();
+      if (!h.length) { historyDrop.classList.remove("open"); return; }
+      historyList.innerHTML = h.map(c => `
+        <div class="history-item" role="option" tabindex="0">
+          <div class="history-item-left" data-city="${c}">
+            <span>🕐</span><span>${c}</span>
+          </div>
+          <button class="history-del" data-del="${c}" aria-label="${c}を削除">✕</button>
+        </div>`).join("");
+    }
+    renderHistory();
+
+    function showHistory() {
+      const h = getHistory();
+      if (h.length) historyDrop.classList.add("open");
+    }
+
+    // ── Favorites UI ──
+    function renderFavs() {
+      const favs = getFavs();
+      favStrip.innerHTML = favs.map(c => `
+        <div class="fav-chip">
+          <span data-fav="${c}">⭐ ${c}</span>
+          <span class="fav-chip-del" data-favrm="${c}" title="${c}を削除">✕</span>
+        </div>`).join("");
+    }
+    renderFavs();
+
+    function updateFavBtn() {
+      const f = isFav(currentCity);
+      favToggle.textContent = f ? "♥" : "♡";
+      favToggle.classList.toggle("active", f);
+      favToggle.setAttribute("aria-label", f ? "お気に入りから削除" : "お気に入りに追加");
+    }
+
+    // ── Theme ──
+    function applyTheme() {
+      const dark = isDark();
+      document.body.classList.toggle("light", !dark);
+      themeToggle.textContent = dark ? "🌙" : "☀️";
+    }
+    applyTheme();
+
+    // ── Geolocation ──
+    function geoLocate() {
+      if (!navigator.geolocation) {
+        showStatus("このブラウザでは位置情報が使えません。", true);
         return;
       }
+      geoBtn.style.animation = "pulse 1s infinite";
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          geoBtn.style.animation = "";
+          fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude);
+        },
+        () => {
+          geoBtn.style.animation = "";
+          fetchWeatherByCity("Tokyo"); // fallback
+        },
+        { timeout: 8000 }
+      );
+    }
 
-      fetchWeather(city);
+    // ── Event listeners ──
+    searchBtn.addEventListener("click", () => {
+      const city = cityInput.value.trim();
+      if (!city) { showStatus("都市名を入力してください。", true); return; }
+      historyDrop.classList.remove("open");
+      fetchWeatherByCity(city);
     });
 
-    // 背景スライド
-    const bgImages = ["bg1.jpg", "bg2.jpg", "bg3.jpg", "bg4.jpg"];
-    let currentIndex = 0;
-    let showingFirst = true;
+    cityInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") searchBtn.click();
+      if (e.key === "Escape") historyDrop.classList.remove("open");
+    });
+    cityInput.addEventListener("focus", showHistory);
 
-    const layer1 = document.getElementById("bg1");
-    const layer2 = document.getElementById("bg2");
-
-    // 初期表示
-    layer1.style.backgroundImage = `url("${bgImages[0]}")`;
-    layer1.classList.add("active");
-
-    setInterval(() => {
-    currentIndex = (currentIndex + 1) % bgImages.length;
-
-    const showLayer = showingFirst ? layer2 : layer1;
-    const hideLayer = showingFirst ? layer1 : layer2;
-
-    showLayer.style.backgroundImage = `url("${bgImages[currentIndex]}")`;
-    showLayer.classList.add("active");
-    hideLayer.classList.remove("active");
-
-    showingFirst = !showingFirst;
-    }, 5000); //  5秒ごと
-    // 背景スライド
-
-    // Enterキーでも検索できるように
-    cityInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        searchBtn.click();
-      }
+    document.addEventListener("click", e => {
+      if (!e.target.closest(".search-wrap")) historyDrop.classList.remove("open");
     });
 
-    async function fetchWeather(city) {
-      resultDiv.textContent = "取得中...";
+    historyList.addEventListener("click", e => {
+      const city = e.target.closest("[data-city]")?.dataset.city;
+      const del  = e.target.closest("[data-del]")?.dataset.del;
+      if (del) { e.stopPropagation(); deleteHistory(del); return; }
+      if (city) { cityInput.value = city; historyDrop.classList.remove("open"); fetchWeatherByCity(city); }
+    });
 
-      try {
-        const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
-          city
-        )}&appid=${API_KEY}&units=metric&lang=ja`;
+    clearHistBtn.addEventListener("click", () => {
+      localStorage.removeItem("wx_history");
+      historyDrop.classList.remove("open");
+      renderHistory();
+    });
 
-        const res = await fetch(url);
-        if (!res.ok) {
-          if (res.status === 404) {
-            throw new Error("その都市が見つかりませんでした。スペルを確認してください。");
-          } else {
-            throw new Error("天気情報の取得に失敗しました。時間をおいて再度お試しください。");
-          }
-        }
+    favStrip.addEventListener("click", e => {
+      const city  = e.target.closest("[data-fav]")?.dataset.fav;
+      const favrm = e.target.closest("[data-favrm]")?.dataset.favrm;
+      if (favrm) { e.stopPropagation(); toggleFav(favrm); return; }
+      if (city)  { cityInput.value = city; fetchWeatherByCity(city); }
+    });
 
-        const data = await res.json();
-        renderWeather(data);
-      } catch (err) {
-        resultDiv.innerHTML = `<span class="error">${err.message}</span>`;
-      }
+    favToggle.addEventListener("click", () => {
+      if (!currentCity) return;
+      toggleFav(currentCity);
+    });
+
+    geoBtn.addEventListener("click", geoLocate);
+
+    unitToggle.addEventListener("click", () => {
+      useFahrenheit = !useFahrenheit;
+      unitToggle.textContent = useFahrenheit ? "°F" : "°C";
+      rerenderUnits();
+    });
+
+    themeToggle.addEventListener("click", () => {
+      const nowDark = isDark();
+      localStorage.setItem("wx_dark", nowDark ? "light" : "dark");
+      applyTheme();
+    });
+
+    // ── PWA ──
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js");
     }
 
-    function renderWeather(data) {
-      const cityName = `${data.name}, ${data.sys.country}`;
-      const temp = Math.round(data.main.temp); // ℃
-      const desc = data.weather[0].description; // 説明（日本語になる）
-      const icon = data.weather[0].icon; // アイコンコード
-
-      const iconUrl = `https://openweathermap.org/img/wn/${icon}@2x.png`;
-
-      resultDiv.innerHTML = `
-        <div class="city-name">${cityName}</div>
-        <div class="temp">${temp}℃</div>
-        <div class="desc">
-          <img src="${iconUrl}" alt="${desc}" style="vertical-align: middle;" />
-          <span>${desc}</span>
-        </div>
-      `;
-    }
- 
-  // PWA化用
-     if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js");
-    }
-  // PWA化用
+    // ── Init: try geolocation, fallback to Tokyo ──
+    geoLocate();
+  })();
   </script>
 </body>
 </html>
