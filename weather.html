@@ -38,6 +38,18 @@
       inset: 0;
       z-index: -1;
       transition: background 2s ease;
+      background-size: cover;
+      background-position: center;
+      background-blend-mode: multiply;
+    }
+    #bg-canvas::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.44)),
+        radial-gradient(circle at 50% 12%, rgba(255,255,255,0.18), transparent 34%);
+      pointer-events: none;
     }
 
     /* ── Layout ── */
@@ -166,6 +178,35 @@
     }
     .history-del:hover { color: #ff6b6b; }
 
+    /* City suggestions */
+    .suggestions-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      z-index: 110;
+      overflow: hidden;
+      border-radius: 16px;
+    }
+    .suggestions-dropdown.open { display: block; }
+    .suggestion-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      color: var(--text);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .suggestion-item:hover,
+    .suggestion-item:focus-visible { background: rgba(255,255,255,0.12); outline: none; }
+    .suggestion-meta { color: var(--text-dim); font-size: 0.82rem; margin-left: auto; }
+
     /* ── Unit / Dark toggle ── */
     .icon-btn {
       background: var(--glass-bg);
@@ -217,6 +258,35 @@
     .fav-chip:hover { background: rgba(255,255,255,0.22); }
     .fav-chip-del { opacity: 0.5; font-size: 0.75rem; cursor: pointer; }
     .fav-chip-del:hover { opacity: 1; color: #ff6b6b; }
+
+    /* ── Favorite comparison ── */
+    #compareCard {
+      padding: 16px 0 16px 16px;
+      margin-bottom: 16px;
+      display: none;
+      animation: fadeUp 0.5s ease both;
+    }
+    .compare-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-right: 16px;
+      scrollbar-width: none;
+    }
+    .compare-scroll::-webkit-scrollbar { display: none; }
+    .compare-card {
+      min-width: 128px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.08);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .compare-card:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.18); }
+    .compare-city { font-size: 0.86rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .compare-temp { font-size: 1.45rem; font-weight: 700; margin: 6px 0 2px; }
+    .compare-desc { font-size: 0.76rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ── Current Weather Card ── */
     #weatherCard {
@@ -315,6 +385,120 @@
     .sun-label { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 4px; }
     .sun-value { font-size: 0.95rem; font-weight: 500; }
 
+    /* ── Smart insights ── */
+    #insightCard {
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      display: none;
+      animation: fadeUp 0.5s 0.05s ease both;
+    }
+    .insight-layout {
+      display: grid;
+      grid-template-columns: 104px 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+    .comfort-meter {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--meter-color, #65d6ad) var(--score-pct, 70%), rgba(255,255,255,0.14) 0);
+      position: relative;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16);
+    }
+    .comfort-meter::before {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.26);
+      backdrop-filter: blur(8px);
+    }
+    .comfort-score {
+      position: relative;
+      font-weight: 700;
+      font-size: 1.4rem;
+    }
+    .comfort-label {
+      position: relative;
+      margin-top: 2px;
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      text-align: center;
+    }
+    .insight-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .insight-message {
+      color: var(--text-dim);
+      line-height: 1.55;
+      font-size: 0.9rem;
+    }
+    .advice-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .advice-item {
+      border-radius: 14px;
+      background: rgba(255,255,255,0.08);
+      padding: 12px;
+      min-height: 78px;
+    }
+    .advice-icon { font-size: 1.2rem; margin-bottom: 6px; }
+    .advice-label { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 3px; }
+    .advice-text { font-size: 0.88rem; font-weight: 600; line-height: 1.35; }
+
+    /* ── Rain timeline ── */
+    #rainCard {
+      padding: 20px 20px 18px;
+      margin-bottom: 16px;
+      display: none;
+      animation: fadeUp 0.5s 0.12s ease both;
+    }
+    .rain-summary {
+      color: var(--text-dim);
+      font-size: 0.88rem;
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    .rain-bars {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      align-items: end;
+      min-height: 118px;
+    }
+    .rain-slot {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: 22px 72px 18px;
+      gap: 5px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.68rem;
+    }
+    .rain-bar-track {
+      height: 72px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      display: flex;
+      align-items: end;
+      overflow: hidden;
+    }
+    .rain-bar-fill {
+      width: 100%;
+      min-height: 3px;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #9bd8ff, #3c9bd9);
+    }
+    .rain-pop { color: #9bd8ff; font-weight: 600; }
+
     /* ── Hourly Forecast ── */
     #hourlyCard {
       padding: 20px 0 20px 20px;
@@ -375,6 +559,20 @@
     .forecast-temps { display: flex; gap: 8px; font-size: 0.9rem; min-width: 80px; justify-content: flex-end; }
     .forecast-hi { font-weight: 600; }
     .forecast-lo { color: var(--text-dim); }
+    .forecast-range {
+      width: 62px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      overflow: hidden;
+      margin-left: 4px;
+    }
+    .forecast-range span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #6ec8ff, #ffd166);
+    }
 
     /* ── Status / Error ── */
     #statusMsg {
@@ -414,11 +612,17 @@
       background: #e8edf5;
     }
     body.light #bg-canvas { opacity: 0.4; }
+    body.light .comfort-meter::before { background: rgba(255,255,255,0.56); }
 
     /* ── Responsive ── */
     @media (max-width: 400px) {
       .temp-big { font-size: 4rem; }
       .details-grid { grid-template-columns: repeat(2, 1fr); }
+      .insight-layout { grid-template-columns: 1fr; }
+      .comfort-meter { margin: 0 auto; }
+      .advice-grid { grid-template-columns: 1fr; }
+      .rain-bars { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 12px; }
+      .forecast-range { display: none; }
     }
   </style>
 </head>
@@ -454,10 +658,17 @@
         </div>
         <div id="historyList"></div>
       </div>
+      <div class="suggestions-dropdown glass" id="suggestionsDropdown" role="listbox" aria-label="都市候補"></div>
     </div>
 
     <!-- Favorites -->
     <div class="favorites-strip" id="favStrip"></div>
+
+    <!-- Favorite Compare -->
+    <div class="glass" id="compareCard" aria-label="お気に入り都市の比較">
+      <div class="section-title">FAVORITE CITIES</div>
+      <div class="compare-scroll" id="compareScroll"></div>
+    </div>
 
     <!-- Status / Error -->
     <div id="statusMsg" role="alert" aria-live="polite"></div>
@@ -489,6 +700,19 @@
       <div class="sun-row" id="sunRow"></div>
     </div>
 
+    <!-- Smart Insights -->
+    <div class="glass" id="insightCard" aria-label="今日のコンディション">
+      <div class="section-title">TODAY'S GUIDE</div>
+      <div id="insightContent"></div>
+    </div>
+
+    <!-- Rain Timeline -->
+    <div class="glass" id="rainCard" aria-label="降水タイムライン">
+      <div class="section-title">RAIN TIMELINE</div>
+      <div class="rain-summary" id="rainSummary"></div>
+      <div class="rain-bars" id="rainBars"></div>
+    </div>
+
     <!-- Hourly -->
     <div class="glass" id="hourlyCard" aria-label="時間別予報">
       <div class="section-title">HOURLY FORECAST</div>
@@ -515,8 +739,12 @@
     let currentLat = null, currentLon = null;
     let refreshTimer = null;
     let lastFetchTime = null;
+    let suggestionTimer = null;
+    let compareRequestId = 0;
 
     const MAX_HISTORY = 10;
+    const MAX_COMPARE = 6;
+    const SNAPSHOT_KEY = "wx_last_snapshot";
 
     // ── DOM refs ──
     const cityInput   = document.getElementById("cityInput");
@@ -525,12 +753,20 @@
     const unitToggle  = document.getElementById("unitToggle");
     const themeToggle = document.getElementById("themeToggle");
     const historyDrop = document.getElementById("historyDropdown");
+    const suggestionsDrop = document.getElementById("suggestionsDropdown");
     const historyList = document.getElementById("historyList");
     const clearHistBtn= document.getElementById("clearHistoryBtn");
     const favStrip    = document.getElementById("favStrip");
+    const compareCard = document.getElementById("compareCard");
+    const compareScroll = document.getElementById("compareScroll");
     const favToggle   = document.getElementById("favToggle");
     const statusMsg   = document.getElementById("statusMsg");
     const weatherCard = document.getElementById("weatherCard");
+    const insightCard = document.getElementById("insightCard");
+    const insightContent = document.getElementById("insightContent");
+    const rainCard    = document.getElementById("rainCard");
+    const rainSummary = document.getElementById("rainSummary");
+    const rainBars    = document.getElementById("rainBars");
     const hourlyCard  = document.getElementById("hourlyCard");
     const forecastCard= document.getElementById("forecastCard");
     const lastUpdatedEl = document.getElementById("lastUpdated");
@@ -539,6 +775,9 @@
     const getHistory  = () => JSON.parse(localStorage.getItem("wx_history") || "[]");
     const getFavs     = () => JSON.parse(localStorage.getItem("wx_favs") || "[]");
     const isDark      = () => localStorage.getItem("wx_dark") !== "light";
+    const escapeHtml  = value => String(value ?? "").replace(/[&<>"']/g, ch => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[ch]));
 
     function saveHistory(city) {
       let h = getHistory().filter(c => c.toLowerCase() !== city.toLowerCase());
@@ -570,19 +809,19 @@
 
     // ── Background gradients ──
     const BG_MAP = {
-      clear_day:   "linear-gradient(160deg,#1e3c72,#2a5298,#f7971e)",
-      clear_night: "linear-gradient(160deg,#0f0c29,#302b63,#24243e)",
-      clouds_day:  "linear-gradient(160deg,#3a4a5c,#5c7a9a,#8ca6b8)",
-      clouds_night:"linear-gradient(160deg,#1a1a2e,#16213e,#0f3460)",
-      rain_day:    "linear-gradient(160deg,#1e3c6e,#2d6a9f,#4a4a8a)",
-      rain_night:  "linear-gradient(160deg,#0d0d1a,#1a2640,#0d2444)",
-      snow_day:    "linear-gradient(160deg,#6a9fb5,#8bbfd4,#cde3ec)",
-      snow_night:  "linear-gradient(160deg,#1a2a3a,#2a3a4a,#3a4a5a)",
-      thunder_day: "linear-gradient(160deg,#1a1a2e,#4a3060,#6a2070)",
-      thunder_night:"linear-gradient(160deg,#0a0a1a,#1a1040,#2a0a30)",
-      mist_day:    "linear-gradient(160deg,#536976,#657f8a,#8aa3ae)",
-      mist_night:  "linear-gradient(160deg,#1a2030,#2a3040,#3a4050)",
-      default:     "linear-gradient(160deg,#1a1a2e,#16213e,#0f3460)",
+      clear_day:   "linear-gradient(160deg,rgba(30,60,114,.72),rgba(247,151,30,.42)), url('./bg1.jpg')",
+      clear_night: "linear-gradient(160deg,rgba(15,12,41,.82),rgba(36,36,62,.7)), url('./bg1.jpg')",
+      clouds_day:  "linear-gradient(160deg,rgba(58,74,92,.72),rgba(140,166,184,.52)), url('./bg2.jpg')",
+      clouds_night:"linear-gradient(160deg,rgba(20,26,44,.84),rgba(15,52,96,.66)), url('./bg2.jpg')",
+      rain_day:    "linear-gradient(160deg,rgba(30,60,110,.64),rgba(45,106,159,.62)), url('./bg3.jpg')",
+      rain_night:  "linear-gradient(160deg,rgba(13,13,26,.84),rgba(13,36,68,.7)), url('./bg3.jpg')",
+      snow_day:    "linear-gradient(160deg,rgba(106,159,181,.52),rgba(205,227,236,.36)), url('./bg4.jpg')",
+      snow_night:  "linear-gradient(160deg,rgba(26,42,58,.7),rgba(58,74,90,.54)), url('./bg4.jpg')",
+      thunder_day: "linear-gradient(160deg,rgba(26,26,46,.78),rgba(106,32,112,.56)), url('./bg2.jpg')",
+      thunder_night:"linear-gradient(160deg,rgba(10,10,26,.86),rgba(42,10,48,.72)), url('./bg2.jpg')",
+      mist_day:    "linear-gradient(160deg,rgba(83,105,118,.7),rgba(138,163,174,.48)), url('./bg2.jpg')",
+      mist_night:  "linear-gradient(160deg,rgba(26,32,48,.82),rgba(58,64,80,.64)), url('./bg2.jpg')",
+      default:     "linear-gradient(160deg,rgba(26,26,46,.74),rgba(15,52,96,.6)), url('./bg1.jpg')",
     };
 
     function setBackground(weatherId, icon) {
@@ -624,11 +863,124 @@
     const AQI_LABELS = ["—","良好","まずまず","やや悪い","悪い","非常に悪い"];
     const AQI_COLORS = ["","#4caf50","#8bc34a","#ff9800","#f44336","#9c27b0"];
 
+    function clamp(n, min, max) {
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function rainChance(item) {
+      const id = item.weather?.[0]?.id || 800;
+      const pop = item.pop ? item.pop : 0;
+      if (id >= 200 && id < 700) return Math.max(pop, 0.55);
+      return pop;
+    }
+
+    function summarizeRain(items) {
+      const next12 = items.filter(i => i.dt > Date.now() / 1000).slice(0, 8);
+      const wet = next12.find(i => rainChance(i) >= 0.35);
+      if (!wet) return "この先しばらく強い雨のサインは低めです。";
+      const time = new Date(wet.dt * 1000).toLocaleTimeString("ja-JP", {hour:"2-digit", minute:"2-digit"});
+      const pop = Math.round(rainChance(wet) * 100);
+      const desc = wet.weather?.[0]?.description || "雨";
+      return `${time}ごろに${desc}の可能性があります。降水確率は約${pop}%です。`;
+    }
+
+    function buildWeatherGuide(w, forecastItems, aqi) {
+      const now = Date.now() / 1000;
+      const next = forecastItems.filter(i => i.dt > now).slice(0, 8);
+      const temps = next.length ? next.map(i => i.main.temp) : [w.main.temp];
+      const maxTemp = Math.max(...temps, w.main.temp);
+      const minTemp = Math.min(...temps, w.main.temp);
+      const maxRain = next.length ? Math.max(...next.map(rainChance)) : 0;
+      const windKmh = w.wind ? Math.round(w.wind.speed * 3.6) : 0;
+      const aqiIdx = aqi?.list?.[0]?.main?.aqi || 0;
+
+      let score = 100;
+      score -= Math.abs(w.main.feels_like - 22) * 1.7;
+      score -= maxRain * 26;
+      score -= Math.max(0, windKmh - 18) * 0.9;
+      score -= Math.max(0, aqiIdx - 2) * 10;
+      score = clamp(Math.round(score), 28, 98);
+
+      const alerts = [];
+      if (maxRain >= 0.65) alerts.push("傘を持って出ると安心です。");
+      else if (maxRain >= 0.35) alerts.push("折りたたみ傘があると身軽です。");
+      if (minTemp <= 8) alerts.push("朝晩はかなり冷えます。");
+      else if (maxTemp >= 30) alerts.push("暑さ対策と水分補給を優先しましょう。");
+      if (windKmh >= 32) alerts.push("風が強めなので移動時は注意。");
+      if (aqiIdx >= 4) alerts.push("空気が重めです。長時間の屋外活動は控えめに。");
+
+      const outfit = w.main.feels_like <= 8 ? "厚手の上着" :
+        w.main.feels_like <= 16 ? "軽い羽織り" :
+        w.main.feels_like >= 28 ? "通気性重視" : "身軽な服装";
+      const umbrella = maxRain >= 0.35 ? "傘を携帯" : "傘なしでOK";
+      const outdoor = aqiIdx >= 4 ? "短めの外出" : windKmh >= 32 ? "風に注意" : score >= 75 ? "散歩日和" : "無理なく行動";
+
+      return {
+        score,
+        meterColor: score >= 78 ? "#65d6ad" : score >= 58 ? "#ffd166" : "#ff8a8a",
+        title: alerts.length ? "少し気をつけたい天気です" : "過ごしやすいコンディションです",
+        message: alerts.length ? alerts.join(" ") : "気温、風、大気質のバランスがよく、外出もしやすい一日です。",
+        advice: [
+          { icon: "🧥", label: "服装", text: outfit },
+          { icon: "☂", label: "持ち物", text: umbrella },
+          { icon: "🚶", label: "外出", text: outdoor },
+        ],
+      };
+    }
+
+    function renderInsights(wData, fData, aqiData) {
+      const guide = buildWeatherGuide(wData, fData.list, aqiData);
+      insightContent.innerHTML = `
+        <div class="insight-layout">
+          <div class="comfort-meter" style="--score-pct:${guide.score}%;--meter-color:${guide.meterColor}">
+            <div>
+              <div class="comfort-score">${guide.score}</div>
+              <div class="comfort-label">COMFORT</div>
+            </div>
+          </div>
+          <div>
+            <div class="insight-title">${escapeHtml(guide.title)}</div>
+            <div class="insight-message">${escapeHtml(guide.message)}</div>
+          </div>
+        </div>
+        <div class="advice-grid">
+          ${guide.advice.map(item => `
+            <div class="advice-item">
+              <div class="advice-icon">${item.icon}</div>
+              <div class="advice-label">${escapeHtml(item.label)}</div>
+              <div class="advice-text">${escapeHtml(item.text)}</div>
+            </div>
+          `).join("")}
+        </div>`;
+      insightCard.style.display = "block";
+    }
+
+    function renderRainTimeline(items) {
+      const next = items.filter(i => i.dt > Date.now() / 1000).slice(0, 8);
+      if (!next.length) {
+        rainCard.style.display = "none";
+        return;
+      }
+      rainSummary.textContent = summarizeRain(items);
+      rainBars.innerHTML = next.map(item => {
+        const pop = Math.round(rainChance(item) * 100);
+        const time = new Date(item.dt * 1000).toLocaleTimeString("ja-JP", {hour:"2-digit"});
+        return `<div class="rain-slot">
+          <div class="rain-pop">${pop}%</div>
+          <div class="rain-bar-track"><div class="rain-bar-fill" style="height:${clamp(pop, 3, 100)}%"></div></div>
+          <div>${time}</div>
+        </div>`;
+      }).join("");
+      rainCard.style.display = "block";
+    }
+
     // ── Render helpers ──
     function showStatus(msg, isError = false) {
       statusMsg.textContent = msg;
       statusMsg.className = (isError ? "error" : "") + " visible";
       weatherCard.style.display = "none";
+      insightCard.style.display = "none";
+      rainCard.style.display = "none";
       hourlyCard.style.display  = "none";
       forecastCard.style.display= "none";
     }
@@ -684,8 +1036,12 @@
       `;
       if (aqi) {
         const idx = aqi.list[0].main.aqi;
+        document.getElementById("aqiBadge").innerHTML =
+          `<span class="aqi-badge" style="background:${AQI_COLORS[idx]}22;color:${AQI_COLORS[idx]};border:1px solid ${AQI_COLORS[idx]}44">AQI ${AQI_LABELS[idx]}</span>`;
         document.getElementById("aqiVal").innerHTML =
           `<span class="aqi-badge" style="background:${AQI_COLORS[idx]}22;color:${AQI_COLORS[idx]};border:1px solid ${AQI_COLORS[idx]}44">${AQI_LABELS[idx]}</span>`;
+      } else {
+        document.getElementById("aqiBadge").innerHTML = "";
       }
 
       // Sun row
@@ -744,12 +1100,13 @@
         return `<div class="forecast-row">
           <div class="forecast-day">${dayLabel}</div>
           <div class="forecast-icon">${iconEmoji(id, icon)}</div>
-          <div class="forecast-desc">${mid.weather[0].description}</div>
+          <div class="forecast-desc">${escapeHtml(mid.weather[0].description)}</div>
           ${pop > 0.05 ? `<div class="forecast-pop">💧${Math.round(pop*100)}%</div>` : '<div class="forecast-pop"></div>'}
           <div class="forecast-temps">
             <span class="forecast-hi">${toDisplay(hi)}°</span>
             <span class="forecast-lo">${toDisplay(lo)}°</span>
           </div>
+          <div class="forecast-range"><span style="width:${clamp((hi - lo) * 7 + 24, 24, 100)}%"></span></div>
         </div>`;
       }).join("");
 
@@ -769,6 +1126,35 @@
       window._uptTimer = setInterval(tick, 30000);
     }
 
+    function saveSnapshot(wData, fData, aqiData) {
+      try {
+        localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({
+          savedAt: Date.now(),
+          weather: wData,
+          forecast: fData,
+          aqi: aqiData
+        }));
+      } catch {}
+    }
+
+    function restoreSnapshot() {
+      try {
+        const raw = localStorage.getItem(SNAPSHOT_KEY);
+        if (!raw) return false;
+        const snapshot = JSON.parse(raw);
+        if (!snapshot.weather || !snapshot.forecast) return false;
+        currentData = {
+          weather: snapshot.weather,
+          forecast: snapshot.forecast,
+          aqi: snapshot.aqi || null
+        };
+        currentLat = snapshot.weather.coord?.lat ?? null;
+        currentLon = snapshot.weather.coord?.lon ?? null;
+        renderAll(snapshot.weather, snapshot.forecast, snapshot.aqi || null, { fromSnapshot: true });
+        return true;
+      } catch { return false; }
+    }
+
     // ── Fetch all data ──
     async function fetchWeatherByCity(city) {
       setLoading(true);
@@ -783,16 +1169,18 @@
           if (wRes.status === 404) throw new Error("その都市が見つかりませんでした。スペルを確認してください。");
           throw new Error("天気情報の取得に失敗しました。時間をおいて再試行してください。");
         }
+        if (!fRes.ok) throw new Error("予報データの取得に失敗しました。時間をおいて再試行してください。");
         const [wData, fData] = await Promise.all([wRes.json(), fRes.json()]);
-        currentData = { weather: wData, forecast: fData };
         currentLat  = wData.coord.lat;
         currentLon  = wData.coord.lon;
         const aqiData = await fetchAQI(currentLat, currentLon);
+        currentData = { weather: wData, forecast: fData, aqi: aqiData };
         renderAll(wData, fData, aqiData);
         saveHistory(wData.name);
         scheduleAutoRefresh(wData.name, null, null);
       } catch (e) {
-        showStatus(e.message, true);
+        if (!restoreSnapshot()) showStatus(e.message, true);
+        else lastUpdatedEl.textContent += " / 最新データの取得に失敗";
       } finally {
         setLoading(false);
       }
@@ -808,16 +1196,18 @@
           fetch(`${base}/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=ja&cnt=40`),
         ]);
         if (!wRes.ok) throw new Error("天気情報の取得に失敗しました。");
+        if (!fRes.ok) throw new Error("予報データの取得に失敗しました。");
         const [wData, fData] = await Promise.all([wRes.json(), fRes.json()]);
-        currentData = { weather: wData, forecast: fData };
         currentLat  = lat;
         currentLon  = lon;
         const aqiData = await fetchAQI(lat, lon);
+        currentData = { weather: wData, forecast: fData, aqi: aqiData };
         renderAll(wData, fData, aqiData);
         saveHistory(wData.name);
         scheduleAutoRefresh(null, lat, lon);
       } catch (e) {
-        showStatus(e.message, true);
+        if (!restoreSnapshot()) showStatus(e.message, true);
+        else lastUpdatedEl.textContent += " / 最新データの取得に失敗";
       } finally {
         setLoading(false);
       }
@@ -833,17 +1223,66 @@
       } catch { return null; }
     }
 
-    function renderAll(wData, fData, aqiData) {
+    async function fetchCitySuggestions(query) {
+      const q = query.trim();
+      if (q.length < 2) {
+        suggestionsDrop.classList.remove("open");
+        suggestionsDrop.innerHTML = "";
+        return;
+      }
+      try {
+        const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(q)}&limit=5&appid=${API_KEY}`);
+        if (!res.ok) return;
+        const items = await res.json();
+        renderSuggestions(items);
+      } catch {
+        suggestionsDrop.classList.remove("open");
+      }
+    }
+
+    function renderSuggestions(items) {
+      if (!items.length) {
+        suggestionsDrop.classList.remove("open");
+        suggestionsDrop.innerHTML = "";
+        return;
+      }
+      historyDrop.classList.remove("open");
+      suggestionsDrop.innerHTML = items.map(item => {
+        const label = [item.local_names?.ja || item.name, item.state, item.country].filter(Boolean).join(", ");
+        const meta = item.name !== item.local_names?.ja ? item.name : item.country;
+        return `<button class="suggestion-item" type="button"
+          data-suggest-name="${escapeHtml(item.name)}"
+          data-lat="${item.lat}"
+          data-lon="${item.lon}">
+          <span>📍</span>
+          <span>${escapeHtml(label)}</span>
+          <span class="suggestion-meta">${escapeHtml(meta || "")}</span>
+        </button>`;
+      }).join("");
+      suggestionsDrop.classList.add("open");
+    }
+
+    function renderAll(wData, fData, aqiData, options = {}) {
       renderCurrent(wData, aqiData);
+      renderInsights(wData, fData, aqiData);
+      renderRainTimeline(fData.list);
       renderHourly(fData.list);
       renderForecast(fData.list);
-      updateLastUpdated();
+      renderFavoriteCompare();
+      if (options.fromSnapshot) {
+        const savedAt = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || "{}").savedAt;
+        const stamp = savedAt ? new Date(savedAt).toLocaleString("ja-JP", {month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit"}) : "前回";
+        lastUpdatedEl.textContent = `${stamp}の保存データを表示中`;
+      } else {
+        updateLastUpdated();
+        saveSnapshot(wData, fData, aqiData);
+      }
     }
 
     // ── Unit toggle: re-render without refetch ──
     function rerenderUnits() {
       if (!currentData) return;
-      const { weather: wData, forecast: fData } = currentData;
+      const { weather: wData, forecast: fData, aqi: aqiData } = currentData;
       document.getElementById("tempVal").textContent = toDisplay(wData.main.temp);
       document.getElementById("tempUnitLabel").textContent = unitStr();
       document.getElementById("feelsLike").textContent = `体感 ${toDisplay(wData.main.feels_like)}${unitStr()}`;
@@ -854,6 +1293,7 @@
         const feelsEl = grid.querySelector(".detail-item:nth-child(5) .detail-value");
         if (feelsEl) feelsEl.textContent = `${toDisplay(wData.main.feels_like)}${unitStr()}`;
       }
+      renderInsights(wData, fData, aqiData);
       renderHourly(fData.list);
       renderForecast(fData.list);
     }
@@ -873,10 +1313,10 @@
       if (!h.length) { historyDrop.classList.remove("open"); return; }
       historyList.innerHTML = h.map(c => `
         <div class="history-item" role="option" tabindex="0">
-          <div class="history-item-left" data-city="${c}">
-            <span>🕐</span><span>${c}</span>
+          <div class="history-item-left" data-city="${escapeHtml(c)}">
+            <span>🕐</span><span>${escapeHtml(c)}</span>
           </div>
-          <button class="history-del" data-del="${c}" aria-label="${c}を削除">✕</button>
+          <button class="history-del" data-del="${escapeHtml(c)}" aria-label="${escapeHtml(c)}を削除">✕</button>
         </div>`).join("");
     }
     renderHistory();
@@ -891,11 +1331,56 @@
       const favs = getFavs();
       favStrip.innerHTML = favs.map(c => `
         <div class="fav-chip">
-          <span data-fav="${c}">⭐ ${c}</span>
-          <span class="fav-chip-del" data-favrm="${c}" title="${c}を削除">✕</span>
+          <span data-fav="${escapeHtml(c)}">⭐ ${escapeHtml(c)}</span>
+          <span class="fav-chip-del" data-favrm="${escapeHtml(c)}" title="${escapeHtml(c)}を削除">✕</span>
         </div>`).join("");
+      renderFavoriteCompare();
     }
     renderFavs();
+
+    async function renderFavoriteCompare() {
+      const favs = getFavs().slice(0, MAX_COMPARE);
+      const requestId = ++compareRequestId;
+      if (!favs.length) {
+        compareCard.style.display = "none";
+        compareScroll.innerHTML = "";
+        return;
+      }
+
+      compareCard.style.display = "block";
+      compareScroll.innerHTML = favs.map(c => `
+        <div class="compare-card" aria-hidden="true">
+          <div class="compare-city">${escapeHtml(c)}</div>
+          <div class="compare-temp">...</div>
+          <div class="compare-desc">取得中</div>
+        </div>`).join("");
+
+      const base = "https://api.openweathermap.org";
+      const rows = await Promise.all(favs.map(async city => {
+        try {
+          const res = await fetch(`${base}/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=ja`);
+          if (!res.ok) return null;
+          return await res.json();
+        } catch { return null; }
+      }));
+      if (requestId !== compareRequestId) return;
+
+      compareScroll.innerHTML = rows.map((w, idx) => {
+        const fallbackCity = favs[idx];
+        if (!w) {
+          return `<div class="compare-card" data-compare="${escapeHtml(fallbackCity)}">
+            <div class="compare-city">${escapeHtml(fallbackCity)}</div>
+            <div class="compare-temp">--</div>
+            <div class="compare-desc">取得できません</div>
+          </div>`;
+        }
+        return `<div class="compare-card" data-compare="${escapeHtml(w.name)}" role="button" tabindex="0">
+          <div class="compare-city">${escapeHtml(w.name)}</div>
+          <div class="compare-temp">${toDisplay(w.main.temp)}${unitStr()}</div>
+          <div class="compare-desc">${iconEmoji(w.weather[0].id, w.weather[0].icon)} ${escapeHtml(w.weather[0].description)}</div>
+        </div>`;
+      }).join("");
+    }
 
     function updateFavBtn() {
       const f = isFav(currentCity);
@@ -915,7 +1400,7 @@
     // ── Geolocation ──
     function geoLocate() {
       if (!navigator.geolocation) {
-        showStatus("このブラウザでは位置情報が使えません。", true);
+        if (!currentData) showStatus("このブラウザでは位置情報が使えません。", true);
         return;
       }
       geoBtn.style.animation = "pulse 1s infinite";
@@ -937,17 +1422,28 @@
       const city = cityInput.value.trim();
       if (!city) { showStatus("都市名を入力してください。", true); return; }
       historyDrop.classList.remove("open");
+      suggestionsDrop.classList.remove("open");
       fetchWeatherByCity(city);
     });
 
     cityInput.addEventListener("keydown", e => {
       if (e.key === "Enter") searchBtn.click();
-      if (e.key === "Escape") historyDrop.classList.remove("open");
+      if (e.key === "Escape") {
+        historyDrop.classList.remove("open");
+        suggestionsDrop.classList.remove("open");
+      }
     });
     cityInput.addEventListener("focus", showHistory);
+    cityInput.addEventListener("input", () => {
+      clearTimeout(suggestionTimer);
+      suggestionTimer = setTimeout(() => fetchCitySuggestions(cityInput.value), 250);
+    });
 
     document.addEventListener("click", e => {
-      if (!e.target.closest(".search-wrap")) historyDrop.classList.remove("open");
+      if (!e.target.closest(".search-wrap")) {
+        historyDrop.classList.remove("open");
+        suggestionsDrop.classList.remove("open");
+      }
     });
 
     historyList.addEventListener("click", e => {
@@ -955,6 +1451,14 @@
       const del  = e.target.closest("[data-del]")?.dataset.del;
       if (del) { e.stopPropagation(); deleteHistory(del); return; }
       if (city) { cityInput.value = city; historyDrop.classList.remove("open"); fetchWeatherByCity(city); }
+    });
+
+    suggestionsDrop.addEventListener("click", e => {
+      const btn = e.target.closest("[data-lat][data-lon]");
+      if (!btn) return;
+      cityInput.value = btn.dataset.suggestName || "";
+      suggestionsDrop.classList.remove("open");
+      fetchWeatherByCoords(Number(btn.dataset.lat), Number(btn.dataset.lon));
     });
 
     clearHistBtn.addEventListener("click", () => {
@@ -968,6 +1472,20 @@
       const favrm = e.target.closest("[data-favrm]")?.dataset.favrm;
       if (favrm) { e.stopPropagation(); toggleFav(favrm); return; }
       if (city)  { cityInput.value = city; fetchWeatherByCity(city); }
+    });
+
+    compareScroll.addEventListener("click", e => {
+      const city = e.target.closest("[data-compare]")?.dataset.compare;
+      if (city) { cityInput.value = city; fetchWeatherByCity(city); }
+    });
+    compareScroll.addEventListener("keydown", e => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const city = e.target.closest("[data-compare]")?.dataset.compare;
+      if (city) {
+        e.preventDefault();
+        cityInput.value = city;
+        fetchWeatherByCity(city);
+      }
     });
 
     favToggle.addEventListener("click", () => {
@@ -994,8 +1512,9 @@
       navigator.serviceWorker.register("./sw.js");
     }
 
-    // ── Init: try geolocation, fallback to Tokyo ──
-    geoLocate();
+    // ── Init: show the last known weather instantly, then refresh by location ──
+    const restored = restoreSnapshot();
+    setTimeout(geoLocate, restored ? 350 : 0);
   })();
   </script>
 </body>

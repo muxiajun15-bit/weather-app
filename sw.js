@@ -1,13 +1,17 @@
-const CACHE_NAME = "weather-pwa-v2";
+const CACHE_NAME = "weather-pwa-v3";
 const ASSETS = [
   "./weather.html",
   "./manifest.webmanifest",
   "./sw.js",
+  "./bg1.jpg",
+  "./bg2.jpg",
+  "./bg3.jpg",
+  "./bg4.jpg",
   "./icon-192.png",
   "./icon-512.png"
 ];
 
-const API_CACHE   = "weather-api-v2";
+const API_CACHE   = "weather-api-v3";
 const API_TTL_MS  = 60 * 60 * 1000; // 1 hour
 
 self.addEventListener("install", event => {
